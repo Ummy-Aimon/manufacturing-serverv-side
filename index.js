@@ -19,6 +19,8 @@ async function run (){
     try{
         await client.connect();
         const PaintBlushCollection= client.db('PaintBlush').collection('Tools')
+        const PaintReviewCollection= client.db('PaintReview').collection('Reviews')
+
        
         // PaintBlush tools get
         app.get('/tools', async (req,res) => {
@@ -46,6 +48,25 @@ async function run (){
             const toolresult= await PaintBlushCollection.insertOne(newtool)
             res.send(toolresult)
         })
+
+        // PaintBlush reviews get 
+
+        app.get('/reviews', async (req,res) => {
+            const query={}
+            const cursor= PaintReviewCollection.find(query)
+            const PaintReviewItem= await cursor.toArray()
+            res.send(PaintReviewItem)
+        
+            })
+
+            // PaintBlush reviews POST
+            
+        app.post('/tools', async (req,res)=>{
+            const newreview=req.body
+            const reviewresult= await PaintReviewCollection.insertOne(newreview)
+            res.send(reviewresult)
+        })
+
     }
     finally{
 
