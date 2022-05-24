@@ -20,7 +20,7 @@ async function run (){
         await client.connect();
         const PaintBlushCollection= client.db('PaintBlush').collection('Tools')
        
-        // PaintBlush get
+        // PaintBlush tools get
         app.get('/tools', async (req,res) => {
             const query={}
             const cursor= PaintBlushCollection.find(query)
@@ -30,7 +30,7 @@ async function run (){
         
             })
             
-        //    PaintBlush Param
+        //    PaintBlush tools Param
 
             app.get('/tools/:id', async(req,res)=>{
                 const id= req.params.id
@@ -40,7 +40,7 @@ async function run (){
     
             })
 
-        // PaintBlush POST
+        // PaintBlush tools POST
         app.post('/tools', async (req,res)=>{
             const newtool=req.body
             const toolresult= await PaintBlushCollection.insertOne(newtool)
