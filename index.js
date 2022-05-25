@@ -58,9 +58,9 @@ async function run (){
             res.send(PaintReviewItem)
         
             })
-
-            // PaintBlush reviews POST
             
+            // PaintBlush reviews POST
+
         app.post('/tools', async (req,res)=>{
             const newreview=req.body
             const reviewresult= await PaintReviewCollection.insertOne(newreview)
