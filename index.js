@@ -4,6 +4,7 @@ require('dotenv').config()
 const port= process.env.PORT || 5000
 const app= express()
 const { MongoClient, ServerApiVersion,ObjectId } = require('mongodb');
+const res = require('express/lib/response');
 
 // Middelware
 app.use(cors())
@@ -20,6 +21,7 @@ async function run (){
         await client.connect();
         const PaintBlushCollection= client.db('PaintBlush').collection('Tools')
         const PaintReviewCollection= client.db('PaintReview').collection('Reviews')
+        const UserCollection= client.db('PaintReview').collection('User')
 
        
         // PaintBlush tools get
@@ -58,15 +60,27 @@ async function run (){
             res.send(PaintReviewItem)
         
             })
-            
+
             // PaintBlush reviews POST
 
-        app.post('/tools', async (req,res)=>{
+        app.post('/reviews', async (req,res)=>{
             const newreview=req.body
             const reviewresult= await PaintReviewCollection.insertOne(newreview)
             res.send(reviewresult)
         })
 
+        // PaintBlush user Put
+        app.put('/user', async (req,res)=>{
+          const email=req.params.email
+          const user= req.body
+          const filter= { email:email}
+          const options={upsert:true}
+          const updateDoc={
+              $set:user
+          }
+          const result= await UserCollection.updateOne(filter,options,updateDoc)
+        })
+        res.send(result)
     }
     finally{
 
