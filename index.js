@@ -1,10 +1,14 @@
 const express =require ('express');
 const cors =require ('cors');
+// jwt token
+const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const port= process.env.PORT || 5000
 const app= express()
 const { MongoClient, ServerApiVersion,ObjectId } = require('mongodb');
 const res = require('express/lib/response');
+
+
 
 // Middelware
 app.use(cors())
@@ -69,6 +73,29 @@ async function run (){
             res.send(reviewresult)
         })
 
+        // PainBlush user get
+    
+        app.get('/user',async(req, res)=>{
+            const users= await UserCollection.find().toArray()
+            res.send(users)
+
+        })
+
+        // PaintBlush Admin Put
+        app.put('/user/admin/:email', async (req,res)=>{
+            const email=req.params.email
+            console.log(email)
+            const filter= { email:email}
+            const updateDoc={
+                $set: {role:"admin"}
+                
+            };
+          const result= await UserCollection.updateOne
+          (filter, updateDoc )
+          const token=jwt.sign({email:email}, process.env.JWT_TOKEN,{ expiresIn: '1h' })
+            res.send({result,token})
+          })
+         
         // PaintBlush user Put
         app.put('/user/:email', async (req,res)=>{
           const email=req.params.email
@@ -80,8 +107,9 @@ async function run (){
               
           };
         const result= await UserCollection.updateOne
-        (filter, options, updateDoc)
-          res.send(result)
+        (filter, updateDoc,options, )
+        const token=jwt.sign({email:email}, process.env.JWT_TOKEN,{ expiresIn: '1h' })
+          res.send({result,token})
         })
         
     }
