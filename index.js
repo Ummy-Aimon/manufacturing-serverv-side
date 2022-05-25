@@ -70,17 +70,20 @@ async function run (){
         })
 
         // PaintBlush user Put
-        app.put('/user', async (req,res)=>{
+        app.put('/user/:email', async (req,res)=>{
           const email=req.params.email
           const user= req.body
           const filter= { email:email}
           const options={upsert:true}
           const updateDoc={
-              $set:user
-          }
-          const result= await UserCollection.updateOne(filter,options,updateDoc)
+              $set: user
+              
+          };
+        const result= await UserCollection.updateOne
+        (filter, options, updateDoc)
+          res.send(result)
         })
-        res.send(result)
+        
     }
     finally{
 
