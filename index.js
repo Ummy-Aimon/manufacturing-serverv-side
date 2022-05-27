@@ -8,6 +8,10 @@ const app= express()
 const { MongoClient, ServerApiVersion,ObjectId } = require('mongodb');
 const res = require('express/lib/response');
 
+// payment stripe
+
+const stripe = require("stripe")(process.env.STRIPT_KEY)
+
 
 
 // Middelware
@@ -24,15 +28,16 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 function verifyJWT(req,res,next){
 const authHeader = req.headers.authorization
-
+console.log(authHeader)
 if(!authHeader){
     return res.status(401).send({message: "unAuthorized Access"})
 }
 
-const token= authHeader.split('')[1]
-
+const token= authHeader.split(' ')[1]
+console.log(token)
   jwt.verify(token,process.env.JWT_TOKEN, function(err, decoded){
       if(err){
+          console.log(err)
           return res.status(403).send({message:"Forbidded Access"})
       }
       req.decoded= decoded
@@ -46,9 +51,27 @@ async function run (){
     try{
         await client.connect();
         const PaintBlushCollection= client.db('PaintBlush').collection('Tools')
+        const PaintPurchaseCollection= client.db('PaintBlush').collection('Order')
+        const PaintOrderCollection= client.db('PaintBlush').collection('Purchase')
         const PaintReviewCollection= client.db('PaintReview').collection('Reviews')
         const UserCollection= client.db('PaintReview').collection('User')
+        const ProfileCollection= client.db('PaintReview').collection('Profile')
 
+
+
+    // verfy Admin
+
+    // const verifyAdmin = async (req, res, next) => {
+    //     const requst= req.decoded.email
+    //     const requestAccount= await UserCollection.findOne({ email: requst})
+    //     if (requestAccount.role === 'admin'){
+    //         next()
+    //     }
+    //     else{
+    //         return  res.status(403).send({message:"Forbidded Access"}) 
+    //       }
+
+    // }
        
         // PaintBlush tools get
         app.get('/tools', async (req,res) => {
@@ -97,7 +120,7 @@ async function run (){
 
         // PainBlush user get
     
-        app.get('/user',verifyJWT,async(req, res)=>{
+        app.get('/user',async(req, res)=>{
             const users= await UserCollection.find().toArray()
             res.send(users)
 
@@ -108,32 +131,37 @@ async function run (){
         app.get('/admin/:email', async (req,res)=>{
             const email= req.params.email
             const user= await UserCollection.findOne({email:email})
+            console.log(user)
             const isAdmin = user.role === 'admin'
-            res.send(isAdmin)
+            console.log(isAdmin)
+
+            res.send({admin:isAdmin})
         })
 
         // PaintBlush Admin Put
-        app.put('/user/admin/:email' , verifyJWT,async (req,res)=>{
+        app.put('/user/admin/:email' ,verifyJWT, async (req,res)=>{
             const email=req.params.email
             const requst= req.decoded.email
             const requestAccount= await UserCollection.findOne({ email: requst})
+           let updateDoc= {}
             if(requestAccount.role === 'admin'){
                 const filter= { email:email}
-                const updateDoc={
-                    $set: {role:"admin"}
+                 updateDoc={
+                    $set: {role:'admin'}
                     
             }
+            console.log(updateDoc)
             const result= await UserCollection.updateOne
           (filter, updateDoc )
           res.send(result)  
          }
          else{
-             res.status(403).send({message:"Forbidded Access"}) 
+           return  res.status(403).send({message:"Forbidded Access"}) 
          }
-        //   const token=jwt.sign({email:email}, process.env.JWT_TOKEN,{ expiresIn: '1h' })
         
           })
          
+
         // PaintBlush user Put
         app.put('/user/:email', async (req,res)=>{
           const email=req.params.email
@@ -149,8 +177,97 @@ async function run (){
         const token=jwt.sign({email:email}, process.env.JWT_TOKEN,{ expiresIn: '1h' })
           res.send({result,token})
         })
+
+
+        // PaintBlush purchase order Tools
         
+        app.post('/purchase', async (req,res)=>{
+            const newpurchase=req.body
+            const orderresult= await PaintPurchaseCollection.insertOne(newpurchase)
+            res.send(orderresult)
+        })
+
+        app.get('/purchase', async (req,res)=>{
+            const email= req.query.email
+            console.log(email)
+            const query={email:email}
+            const cursor= PaintPurchaseCollection.find(query)
+            const purchaseItem= await cursor.toArray()
+            res.send(purchaseItem)
+        })
+        
+        //  purchase params
+
+        app.get('/purchase/:id', async(req,res)=>{
+            const id= req.params.id
+            const query={_id:ObjectId(id)}
+            const purchaseItem =await PaintPurchaseCollection.findOne(query)
+            res.send(purchaseItem)
+
+        })
+
+        // ALL order purchase 
+       
+        app.post('/order',  async (req,res)=>{
+            const newpurchase=req.body
+            const orderresult= await PaintOrderCollection.insertOne(newpurchase)
+            res.send(orderresult)
+        })
+
+        // all order purchase
+
+        app.get('/order',async(req, res)=>{
+            const order= await PaintOrderCollection.find().toArray()
+            res.send(order)
+
+        })
+
+        // order delete
+        app.delete('/order/:id', async(req,res)=>{
+            const id= req.params.id
+            const query={_id:ObjectId(id)}
+            const deleteItem= await PaintOrderCollection.deleteOne(query)
+            res.send(deleteItem)
+        })
+
+        // profile post
+        app.post('/profile', async (req,res)=>{
+            const newprofile= req.body
+            const profileresult= await ProfileCollection.insertOne(newprofile)
+            res.send(profileresult)
+        })
+
+        app.get('/profile', async (req,res)=>{
+            const email= req.query.email
+            console.log(email)
+            const query={email:email}
+            const cursor=  ProfileCollection.find(query)
+            const orderItem= await cursor.toArray()
+            console.log(orderItem)
+            res.send(orderItem)
+        })
+
+
+        // payment stripe 
+
+        app.post("/create-payment-intent", async (req, res) => {
+            const { price } = req.body;
+            // Create a PaymentIntent with the order amount and currency
+            const paymentIntent = await stripe.paymentIntents.create({
+              amount: price*100,
+              currency: "usd",
+              automatic_payment_methods: ["card"]
+            });
+          
+            res.send({
+              clientSecret: paymentIntent.client_secret,
+            });
+          });
+    
+
+
     }
+
     finally{
 
     }
