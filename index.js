@@ -100,7 +100,7 @@ async function run (){
             res.send(toolresult)
         })
 
-        // PaintBlush reviews get 
+        /// PaintBlush reviews get 
 
         app.get('/reviews', async (req,res) => {
             const query={}
