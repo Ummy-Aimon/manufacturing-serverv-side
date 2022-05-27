@@ -11,6 +11,7 @@
 * UseNodemon
 * Usecors
 * Useexpressjson
-* Useget
-* Usepost
-* Useput
+* UseStripe
+* UseJWT
+* UseStripe
+
