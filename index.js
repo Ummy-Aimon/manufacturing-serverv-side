@@ -197,6 +197,24 @@ async function run (){
             const purchaseItem= await cursor.toArray()
             res.send(purchaseItem)
         })
+
+        // purchase delete 
+
+        app.delete('/purchase/:id', async(req,res)=>{
+            const id= req.params.id
+            const query={_id:ObjectId(id)}
+            const deleteItem= await PaintPurchaseCollection.deleteOne(query)
+            res.send(deleteItem)
+        })
+
+    // Purchase admin
+
+        app.get('/purchaseadmin', async (req,res)=>{
+            const query={}
+            const cursor= PaintPurchaseCollection.find(query)
+            const purchaseItem= await cursor.toArray()
+            res.send(purchaseItem)
+        })
         
         //  purchase params
 
