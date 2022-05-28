@@ -252,7 +252,7 @@ async function run (){
 
         })
 
-        // order delete
+        /// order delete
         app.delete('/tools/:id', async(req,res)=>{
             const id= req.params.id
             const query={_id:ObjectId(id)}
