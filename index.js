@@ -215,6 +215,16 @@ async function run (){
             const purchaseItem= await cursor.toArray()
             res.send(purchaseItem)
         })
+
+        // Purchase delete admin
+
+        app.delete('/purchaseadmin/:id', async (req,res)=>{
+            const id= req.params.id
+            const query={_id:ObjectId(id)}
+            const cursor= PaintPurchaseCollection.deleteOne(query)
+            const purchaseItem= await cursor.toArray()
+            res.send(purchaseItem)
+        })
         
         //  purchase params
 
