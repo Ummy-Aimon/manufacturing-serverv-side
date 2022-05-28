@@ -53,9 +53,11 @@ async function run (){
         const PaintBlushCollection= client.db('PaintBlush').collection('Tools')
         const PaintPurchaseCollection= client.db('PaintBlush').collection('Order')
         const PaintOrderCollection= client.db('PaintBlush').collection('Purchase')
+        const PaymentCollection= client.db('PaintBlush').collection('Payment')
         const PaintReviewCollection= client.db('PaintReview').collection('Reviews')
         const UserCollection= client.db('PaintReview').collection('User')
         const ProfileCollection= client.db('PaintReview').collection('Profile')
+
 
 
 
@@ -223,10 +225,10 @@ async function run (){
         })
 
         // order delete
-        app.delete('/order/:id', async(req,res)=>{
+        app.delete('/tools/:id', async(req,res)=>{
             const id= req.params.id
             const query={_id:ObjectId(id)}
-            const deleteItem= await PaintOrderCollection.deleteOne(query)
+            const deleteItem= await PaintBlushCollection.deleteOne(query)
             res.send(deleteItem)
         })
 
@@ -252,11 +254,12 @@ async function run (){
 
         app.post("/create-payment-intent", async (req, res) => {
             const { price } = req.body;
+
             // Create a PaymentIntent with the order amount and currency
             const paymentIntent = await stripe.paymentIntents.create({
               amount: price*100,
               currency: "usd",
-              automatic_payment_methods: ["card"]
+              payment_method_types: ["card"]
             });
           
             res.send({
@@ -264,8 +267,27 @@ async function run (){
             });
           });
     
+        //   payment patch
+
+        app.patch('/purchase/:id', async(req,res)=>{
+            const id= req.params.id
+            const payment= req.body
+            const query={_id:ObjectId(id)}
+            const updateDoc={
+                $set:{
+                    paid:true,
+                    transaction: payment.transaction
+
+            }
+        }
+            const updatedPurchase= await PaintPurchaseCollection.updateOne (query,updateDoc)
+            const result= await PaymentCollection.insertOne(payment)
+            res.send(updateDoc)
+
+        })
 
 
+        
     }
 
     finally{
